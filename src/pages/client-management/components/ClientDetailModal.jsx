@@ -1,0 +1,283 @@
+import React, { useState } from 'react';
+import Icon from '../../../components/AppIcon';
+import Image from '../../../components/AppImage';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
+
+const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
+  const [activeTab, setActiveTab] = useState('profile');
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState(client || {});
+
+  if (!isOpen || !client) return null;
+
+  const tabs = [
+    { id: 'profile', label: 'Perfil', icon: 'User' },
+    { id: 'projects', label: 'Proyectos', icon: 'FolderOpen' },
+    { id: 'social', label: 'Redes Sociales', icon: 'Share2' },
+    { id: 'communication', label: 'Comunicación', icon: 'MessageSquare' }
+  ];
+
+  const handleSave = () => {
+    onSave(formData);
+    setEditMode(false);
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const renderProfileTab = () => (
+    <div className="space-y-6">
+      <div className="flex items-center space-x-6">
+        <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
+          <Image 
+            src={client?.logo} 
+            alt={client?.logoAlt}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="flex-1">
+          {editMode ? (
+            <div className="space-y-3">
+              <Input
+                label="Nombre del Negocio"
+                value={formData?.name}
+                onChange={(e) => handleInputChange('name', e?.target?.value)}
+              />
+              <Input
+                label="Tipo de Negocio"
+                value={formData?.businessType}
+                onChange={(e) => handleInputChange('businessType', e?.target?.value)}
+              />
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">{client?.name}</h2>
+              <p className="text-muted-foreground">{client?.businessType}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Información de Contacto</h3>
+          {editMode ? (
+            <div className="space-y-3">
+              <Input
+                label="Email"
+                type="email"
+                value={formData?.email}
+                onChange={(e) => handleInputChange('email', e?.target?.value)}
+              />
+              <Input
+                label="Teléfono"
+                value={formData?.phone}
+                onChange={(e) => handleInputChange('phone', e?.target?.value)}
+              />
+              <Input
+                label="Dirección"
+                value={formData?.address}
+                onChange={(e) => handleInputChange('address', e?.target?.value)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <Icon name="Mail" size={16} className="text-muted-foreground" />
+                <span className="text-foreground">{client?.email}</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Icon name="Phone" size={16} className="text-muted-foreground" />
+                <span className="text-foreground">{client?.phone}</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Icon name="MapPin" size={16} className="text-muted-foreground" />
+                <span className="text-foreground">{client?.address}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Estado del Servicio</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Suscripción</span>
+              <span className="font-medium text-foreground capitalize">{client?.subscription}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Estado del Sitio Web</span>
+              <span className={`font-medium ${client?.websiteStatus === 'live' ? 'text-success' : 'text-warning'}`}>
+                {client?.websiteStatus === 'live' ? 'En Línea' : 'En Desarrollo'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Redes Sociales</span>
+              <span className={`font-medium ${client?.socialConnected ? 'text-success' : 'text-muted-foreground'}`}>
+                {client?.socialConnected ? 'Conectadas' : 'Sin Conectar'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProjectsTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-foreground">Proyectos del Cliente</h3>
+        <Button variant="outline" iconName="Plus" iconPosition="left">
+          Nuevo Proyecto
+        </Button>
+      </div>
+      
+      <div className="space-y-3">
+        {client?.projects?.map((project, index) => (
+          <div key={index} className="bg-muted/50 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-foreground">{project?.name}</h4>
+                <p className="text-sm text-muted-foreground">{project?.description}</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  project?.status === 'completed' ? 'bg-success/10 text-success' :
+                  project?.status === 'in-progress'? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {project?.status === 'completed' ? 'Completado' :
+                   project?.status === 'in-progress' ? 'En Progreso' : 'Pendiente'}
+                </span>
+                <Button variant="ghost" size="icon">
+                  <Icon name="ExternalLink" size={16} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSocialTab = () => (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-foreground">Integración de Redes Sociales</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {client?.socialAccounts?.map((account, index) => (
+          <div key={index} className="bg-muted/50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  account?.platform === 'facebook' ? 'bg-blue-500' :
+                  account?.platform === 'instagram' ? 'bg-pink-500' :
+                  account?.platform === 'twitter' ? 'bg-blue-400' : 'bg-gray-500'
+                }`}>
+                  <Icon name="Share2" size={16} color="white" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground capitalize">{account?.platform}</h4>
+                  <p className="text-sm text-muted-foreground">@{account?.username}</p>
+                </div>
+              </div>
+              <div className={`w-3 h-3 rounded-full ${account?.connected ? 'bg-success' : 'bg-muted-foreground'}`}></div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Seguidores</span>
+                <div className="font-medium text-foreground">{account?.followers}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Posts</span>
+                <div className="font-medium text-foreground">{account?.posts}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderCommunicationTab = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-foreground">Historial de Comunicación</h3>
+        <Button variant="outline" iconName="Plus" iconPosition="left">
+          Nueva Nota
+        </Button>
+      </div>
+      
+      <div className="space-y-4">
+        {client?.communications?.map((comm, index) => (
+          <div key={index} className="bg-muted/50 rounded-lg p-4">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Icon name={comm?.type === 'email' ? 'Mail' : comm?.type === 'call' ? 'Phone' : 'MessageSquare'} size={16} className="text-muted-foreground" />
+                <span className="font-medium text-foreground">{comm?.subject}</span>
+              </div>
+              <span className="text-sm text-muted-foreground">{comm?.date}</span>
+            </div>
+            <p className="text-sm text-muted-foreground">{comm?.content}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-card rounded-lg shadow-modal w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-xl font-semibold text-foreground">Detalles del Cliente</h2>
+          <div className="flex items-center space-x-2">
+            {editMode ? (
+              <>
+                <Button variant="outline" onClick={() => setEditMode(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSave}>
+                  Guardar
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={() => setEditMode(true)} iconName="Edit2" iconPosition="left">
+                Editar
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <Icon name="X" size={20} />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex border-b border-border">
+          {tabs?.map((tab) => (
+            <button
+              key={tab?.id}
+              onClick={() => setActiveTab(tab?.id)}
+              className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium transition-smooth ${
+                activeTab === tab?.id
+                  ? 'text-primary border-b-2 border-primary' :'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Icon name={tab?.icon} size={16} />
+              <span>{tab?.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          {activeTab === 'profile' && renderProfileTab()}
+          {activeTab === 'projects' && renderProjectsTab()}
+          {activeTab === 'social' && renderSocialTab()}
+          {activeTab === 'communication' && renderCommunicationTab()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ClientDetailModal;
