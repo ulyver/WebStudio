@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useClient } from '../../context/ClientContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 
-const Header = ({ currentClient = null, activeProject = null, onClientChange, onProjectSelect }) => {
-  const location = useLocation();
+const Header = ({ activeProject = null, onProjectSelect }) => {
+  const { clients, currentClient, setCurrentClient } = useClient();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
@@ -54,12 +55,6 @@ const Header = ({ currentClient = null, activeProject = null, onClientChange, on
     }
   ];
 
-  const mockClients = [
-    { id: 1, name: 'Restaurante El Sabor', type: 'Restaurante' },
-    { id: 2, name: 'Boutique Moda', type: 'Retail' },
-    { id: 3, name: 'Servicios Técnicos Pro', type: 'Servicios' }
-  ];
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (clientDropdownRef?.current && !clientDropdownRef?.current?.contains(event?.target)) {
@@ -80,12 +75,11 @@ const Header = ({ currentClient = null, activeProject = null, onClientChange, on
     setIsMoreMenuOpen(false);
   };
 
+  // MODIFICACIÓN: Esta función ahora usa 'setCurrentClient' del contexto
   const handleClientSelect = (client) => {
-    if (onClientChange) {
-      onClientChange(client);
-    }
-    setIsClientDropdownOpen(false);
-  };
+  setCurrentClient(client);
+  setIsClientDropdownOpen(false);
+};
 
   const isActivePath = (path) => {
     return location?.pathname === path;
@@ -162,32 +156,22 @@ const Header = ({ currentClient = null, activeProject = null, onClientChange, on
 
         {/* Client Context & Project Status */}
         <div className="hidden lg:flex items-center space-x-4">
-          {/* Client Context Indicator */}
           <div className="relative" ref={clientDropdownRef}>
-            <button
-              onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
-              className="flex items-center space-x-2 px-3 py-2 bg-muted rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth"
-            >
-              <Icon name="Building2" size={16} />
-              <span>{currentClient ? currentClient?.name : 'Sin cliente'}</span>
-              <Icon name="ChevronDown" size={14} />
+            <button onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)} className="flex items-center space-x-2 px-3 py-2 bg-muted rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
+              <Icon name="Building2" size={16} /><span>{currentClient ? currentClient?.name : 'Sin cliente'}</span><Icon name="ChevronDown" size={14} />
             </button>
 
             {isClientDropdownOpen && (
               <div className="absolute top-full right-0 mt-1 w-64 bg-popover border border-border rounded-md shadow-modal z-1010">
                 <div className="py-1">
-                  <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b border-border">
-                    Seleccionar Cliente
-                  </div>
-                  {mockClients?.map((client) => (
-                    <button
-                      key={client?.id}
-                      onClick={() => handleClientSelect(client)}
-                      className="w-full flex items-center justify-between px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-smooth"
-                    >
+                  <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b border-border">Seleccionar Cliente</div>
+                  
+                   {clients?.map((client) => (
+                    <button key={client?.id} onClick={() => handleClientSelect(client)} className="w-full flex items-center justify-between px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-smooth">
+                    
                       <div className="flex flex-col items-start">
-                        <span className="font-medium">{client?.name}</span>
-                        <span className="text-xs text-muted-foreground">{client?.type}</span>
+                           <span className="font-medium">{client?.name}</span>
+                        <span className="text-xs text-muted-foreground">{client?.businessType}</span> {/* Usamos businessType para consistencia */}
                       </div>
                       {currentClient?.id === client?.id && (
                         <Icon name="Check" size={16} color="var(--color-success)" />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
@@ -8,6 +8,14 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState(client || {});
+
+   useEffect(() => {
+    // Si recibimos un nuevo cliente, actualizamos el estado del formulario.
+    if (client) {
+      setFormData(client);
+    }
+  }, [client]); // El [client] le dice a React: "Ejecuta esto solo cuando 'client' cambie"
+  // ------------------------------
 
   if (!isOpen || !client) return null;
 
