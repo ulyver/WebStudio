@@ -1,75 +1,58 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
-const ClientStats = ({ clients }) => {
-  const stats = {
-    total: clients?.length,
-    active: clients?.filter(c => c?.status === 'active')?.length,
-    pending: clients?.filter(c => c?.status === 'pending')?.length,
-    inactive: clients?.filter(c => c?.status === 'inactive')?.length,
-    withWebsite: clients?.filter(c => c?.websiteStatus === 'live')?.length,
-    socialConnected: clients?.filter(c => c?.socialConnected)?.length,
-    totalProjects: clients?.reduce((sum, c) => sum + c?.activeProjects + c?.completedProjects, 0),
-    activeProjects: clients?.reduce((sum, c) => sum + c?.activeProjects, 0)
-  };
+// 1. Ahora el componente recibe la lista de 'clients' como una "prop".
+const ClientStats = ({ clients = [] }) => {
 
-  const statCards = [
+  // 2. Calculamos las estadísticas dinámicamente a partir de la lista de clientes.
+  //    Usamos '|| 0' para asegurarnos de que si la lista está vacía, mostremos un 0.
+  const totalClients = clients?.length || 0;
+  
+  const activeClients = clients?.filter(client => client.status === 'active')?.length || 0;
+  
+  const activeWebsites = clients?.filter(client => client.websiteStatus === 'live')?.length || 0;
+
+  // Para los proyectos, sumamos el total de proyectos activos de todos los clientes.
+  const activeProjects = clients?.reduce((total, client) => total + (client.activeProjects || 0), 0) || 0;
+
+  // 3. Creamos un array con los datos calculados para renderizarlo de forma limpia.
+  const stats = [
     {
-      title: 'Total Clientes',
-      value: stats?.total,
+      label: 'Total Clientes',
+      value: totalClients,
       icon: 'Users',
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
+      color: 'text-primary'
     },
     {
-      title: 'Clientes Activos',
-      value: stats?.active,
+      label: 'Clientes Activos',
+      value: activeClients,
       icon: 'UserCheck',
-      color: 'text-success',
-      bgColor: 'bg-success/10'
+      color: 'text-success'
     },
     {
-      title: 'Sitios Web Activos',
-      value: stats?.withWebsite,
+      label: 'Sitios Web Activos',
+      value: activeWebsites,
       icon: 'Globe',
-      color: 'text-accent',
-      bgColor: 'bg-accent/10'
+      color: 'text-info' // Asumiendo que tienes un color 'info'
     },
     {
-      title: 'Redes Conectadas',
-      value: stats?.socialConnected,
-      icon: 'Share2',
-      color: 'text-warning',
-      bgColor: 'bg-warning/10'
-    },
-    {
-      title: 'Proyectos Activos',
-      value: stats?.activeProjects,
-      icon: 'FolderOpen',
-      color: 'text-secondary',
-      bgColor: 'bg-secondary/10'
-    },
-    {
-      title: 'Total Proyectos',
-      value: stats?.totalProjects,
-      icon: 'BarChart3',
-      color: 'text-muted-foreground',
-      bgColor: 'bg-muted'
+      label: 'Proyectos Activos',
+      value: activeProjects,
+      icon: 'FolderKanban',
+      color: 'text-warning'
     }
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-      {statCards?.map((stat, index) => (
-        <div key={index} className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-8 h-8 rounded-lg ${stat?.bgColor} flex items-center justify-center`}>
-              <Icon name={stat?.icon} size={16} className={stat?.color} />
-            </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {stats.map((stat, index) => (
+        <div key={index} className="bg-card p-6 rounded-lg border border-border flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+            <p className="text-3xl font-bold text-foreground mt-2">{stat.value}</p>
           </div>
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-foreground">{stat?.value}</div>
-            <div className="text-xs text-muted-foreground">{stat?.title}</div>
+          <div className={`p-3 rounded-full bg-opacity-10 ${stat.color.replace('text-', 'bg-')}`}>
+            <Icon name={stat.icon} size={24} className={stat.color} />
           </div>
         </div>
       ))}

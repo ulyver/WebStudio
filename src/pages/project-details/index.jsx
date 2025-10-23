@@ -10,6 +10,7 @@ import ProjectActions from './components/ProjectActions';
 import CommunicationLog from './components/CommunicationLog';
 import ProjectFiles from './components/ProjectFiles';
 import ProjectTimeline from './components/ProjectTimeline';
+import Button from '../../components/ui/Button'; //
 
 const ProjectDetails = () => {
   const navigate = useNavigate();
