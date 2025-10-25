@@ -1,230 +1,74 @@
 import React, { useState } from 'react';
-import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import Input from '../../../components/ui/Input';
+import Icon from '../../../components/AppIcon';
 
-const AddClientModal = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    businessType: '',
-    email: '',
-    phone: '',
-    address: '',
-    subscription: 'basic',
-    website: '',
-    notes: ''
-  });
-
-  const [errors, setErrors] = useState({});
+const AddProjectModal = ({ isOpen, onClose, onSave, clientId }) => {
+  const [projectName, setProjectName] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
 
   if (!isOpen) return null;
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors?.[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+  const handleSave = () => {
+    if (!projectName.trim()) {
+      alert('El nombre del proyecto es obligatorio.');
+      return;
     }
+    onSave({
+      name: projectName,
+      description: projectDescription,
+      client_id: clientId,
+      status: 'pending',
+    });
+    setProjectName('');
+    setProjectDescription('');
   };
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData?.name?.trim()) {
-      newErrors.name = 'El nombre del negocio es requerido';
-    }
-    
-    if (!formData?.businessType?.trim()) {
-      newErrors.businessType = 'El tipo de negocio es requerido';
-    }
-    
-    if (!formData?.email?.trim()) {
-      newErrors.email = 'El email es requerido';
-    } else if (!/\S+@\S+\.\S+/?.test(formData?.email)) {
-      newErrors.email = 'El email no es válido';
-    }
-    
-    if (!formData?.phone?.trim()) {
-      newErrors.phone = 'El teléfono es requerido';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors)?.length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e?.preventDefault();
-    
-    if (validateForm()) {
-      const newClient = {
-        id: Date.now(),
-        ...formData,
-        status: 'pending',
-        activeProjects: 0,
-        completedProjects: 0,
-        websiteStatus: 'development',
-        socialConnected: false,
-        logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop&crop=center',
-        logoAlt: `Logo del negocio ${formData?.name}`,
-        createdAt: new Date()?.toISOString(),
-        projects: [],
-        socialAccounts: [],
-        communications: []
-      };
-      
-      onSave(newClient);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        businessType: '',
-        email: '',
-        phone: '',
-        address: '',
-        subscription: 'basic',
-        website: '',
-        notes: ''
-      });
-      setErrors({});
-    }
-  };
-
-  const businessTypes = [
-    'Restaurante',
-    'Comercio Minorista',
-    'Servicios Profesionales',
-    'Taller Mecánico',
-    'Panadería',
-    'Pastelería',
-    'Peluquería',
-    'Gimnasio',
-    'Consultorio Médico',
-    'Otro'
-  ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-modal w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-semibold text-foreground">Agregar Nuevo Cliente</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100]">
+      <div className="bg-card rounded-lg shadow-modal w-full max-w-lg m-4">
+        <div className="flex justify-between items-center p-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">Crear Nuevo Proyecto</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <Icon name="X" size={20} />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label htmlFor="projectName" className="block text-sm font-medium text-muted-foreground mb-1">
+              Nombre del Proyecto <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="projectName"
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:outline-none"
+              placeholder="Ej: Sitio Web Corporativo"
+            />
+          </div>
+          <div>
+            <label htmlFor="projectDescription" className="block text-sm font-medium text-muted-foreground mb-1">
+              Descripción (Opcional)
+            </label>
+            <textarea
+              id="projectDescription"
+              value={projectDescription}
+              onChange={(e) => setProjectDescription(e.target.value)}
+              rows="3"
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:outline-none"
+              placeholder="Una breve descripción del alcance del proyecto."
+            />
+          </div>
+        </div>
+        <div className="flex justify-end items-center p-4 bg-muted/50 border-t border-border rounded-b-lg space-x-3">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave} iconName="Plus" iconPosition="left">
+            Guardar Proyecto
           </Button>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Nombre del Negocio"
-                required
-                value={formData?.name}
-                onChange={(e) => handleInputChange('name', e?.target?.value)}
-                error={errors?.name}
-                placeholder="Ej: Restaurante El Sabor"
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Tipo de Negocio *
-                </label>
-                <select
-                  value={formData?.businessType}
-                  onChange={(e) => handleInputChange('businessType', e?.target?.value)}
-                  className={`w-full px-3 py-2 bg-input border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
-                    errors?.businessType ? 'border-destructive' : 'border-border'
-                  }`}
-                  required
-                >
-                  <option value="">Seleccionar tipo</option>
-                  {businessTypes?.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-                {errors?.businessType && (
-                  <p className="mt-1 text-sm text-destructive">{errors?.businessType}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Email"
-                type="email"
-                required
-                value={formData?.email}
-                onChange={(e) => handleInputChange('email', e?.target?.value)}
-                error={errors?.email}
-                placeholder="contacto@negocio.com"
-              />
-
-              <Input
-                label="Teléfono"
-                required
-                value={formData?.phone}
-                onChange={(e) => handleInputChange('phone', e?.target?.value)}
-                error={errors?.phone}
-                placeholder="+34 123 456 789"
-              />
-            </div>
-
-            <Input
-              label="Dirección"
-              value={formData?.address}
-              onChange={(e) => handleInputChange('address', e?.target?.value)}
-              placeholder="Calle Principal 123, Ciudad"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Sitio Web (opcional)"
-                type="url"
-                value={formData?.website}
-                onChange={(e) => handleInputChange('website', e?.target?.value)}
-                placeholder="https://www.negocio.com"
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Plan de Suscripción
-                </label>
-                <select
-                  value={formData?.subscription}
-                  onChange={(e) => handleInputChange('subscription', e?.target?.value)}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="basic">Básico</option>
-                  <option value="standard">Estándar</option>
-                  <option value="premium">Premium</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Notas Adicionales
-              </label>
-              <textarea
-                value={formData?.notes}
-                onChange={(e) => handleInputChange('notes', e?.target?.value)}
-                rows={4}
-                className="w-full px-3 py-2 bg-input border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                placeholder="Información adicional sobre el cliente..."
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end space-x-3 mt-8 pt-6 border-t border-border">
-            <Button variant="outline" type="button" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" iconName="Plus" iconPosition="left">
-              Agregar Cliente
-            </Button>
-          </div>
-        </form>
       </div>
     </div>
   );
 };
 
-export default AddClientModal;
+export default AddProjectModal;
