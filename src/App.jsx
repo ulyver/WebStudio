@@ -1,13 +1,14 @@
+// src/App.jsx
 
-import React from "react";
-import Routes from "./Routes";
-import { ClientProvider } from "./context/ClientContext.jsx";
+import React from 'react';
+import Routes from './Routes';
+import { ClientProvider } from './context/ClientContext';
+import AuthListener from './components/AuthListener'; 
 
 function App() {
   return (
-    // 2. Envolvemos las Rutas con el Proveedor.
-    // Ahora, cualquier página dentro de <Routes /> podrá acceder al contexto.
     <ClientProvider>
+      <AuthListener />
       <Routes />
     </ClientProvider>
   );

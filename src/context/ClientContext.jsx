@@ -1,30 +1,60 @@
+// src/context/ClientContext.jsx (la versión con Local Storage)
 
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { supabase } from '../supabaseClient'; 
 
-import React, { createContext, useState, useContext } from 'react';
-
-// 1. Creamos el Contexto
 const ClientContext = createContext();
 
-// 2. Creamos un "Hook" personalizado para usar el contexto fácilmente
-export const useClient = () => {
-  return useContext(ClientContext);
-};
-
-// 3. Creamos el "Proveedor" del Contexto. Este componente envolverá nuestra aplicación.
 export const ClientProvider = ({ children }) => {
-  const [currentClient, setCurrentClient] = useState(null); // Aquí vivirá el cliente seleccionado
-  const [clients, setClients] = useState([]); // También podemos guardar la lista completa aquí
+  const [clients, setClients] = useState([]);
+  
+  const [currentClient, setCurrentClient] = useState(() => {
+    const savedClientId = localStorage.getItem('selectedClientId');
+    return savedClientId ? { id: savedClientId } : null; 
+  });
 
-  const value = {
-    currentClient,
-    setCurrentClient,
-    clients,
-    setClients,
-  };
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const { data, error } = await supabase.from('clients').select('*').order('name');
+        if (error) throw error;
+        setClients(data);
+
+        const savedClientId = localStorage.getItem('selectedClientId');
+        if (savedClientId) {
+          const fullClientObject = data.find(client => client.id === savedClientId);
+          if (fullClientObject) {
+            setCurrentClient(fullClientObject);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching clients:', err);
+      }
+    };
+    fetchClients();
+  }, []);
+
+  useEffect(() => {
+    if (currentClient && currentClient.id) {
+      localStorage.setItem('selectedClientId', currentClient.id);
+    } else {
+      localStorage.removeItem('selectedClientId');
+    }
+  }, [currentClient]);
+
+  const value = { clients, setClients, currentClient, setCurrentClient };
 
   return (
     <ClientContext.Provider value={value}>
       {children}
     </ClientContext.Provider>
   );
+};
+
+export const useClient = () => {
+  const context = useContext(ClientContext);
+  if (context === undefined) {
+    throw new Error('useClient must be used within a ClientProvider');
+  }
+  return context;
 };

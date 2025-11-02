@@ -1,63 +1,90 @@
-// src/pages/social-media-integration/components/AddSocialAccountModal.jsx
-
 import React from 'react';
-import Button from '../../../components/ui/Button';
-import Icon from '../../../components/AppIcon';
+import { supabase } from '../../../supabaseClient';
+import { FaFacebook, FaLinkedin, FaTiktok, FaInstagram } from 'react-icons/fa'; // NUEVO: Iconos para que los botones se vean bien.
 
-// Esta es la misma lógica de redirección que pusimos en SocialAccountCard
-const handleFacebookConnect = () => {
-  const FACEBOOK_CLIENT_ID = import.meta.env.VITE_FACEBOOK_CLIENT_ID;
-  const REDIRECT_URI = 'http://localhost:4028/social-callback/facebook';
-  const SCOPES = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_manage_insights';
+// =================================================================
+// ELIMINADO: La antigua función 'handleFacebookConnect' ya no es necesaria.
+// La nueva función 'handleSocialConnect' la reemplaza y es mucho más versátil.
+// =================================================================
 
-  if (!FACEBOOK_CLIENT_ID) {
-    alert("Error: El Client ID de Facebook no está configurado en el fichero .env");
-    return;
-  }
-  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${FACEBOOK_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPES}&response_type=code`;
-  window.location.href = authUrl;
+// NUEVO: Un objeto para asociar fácilmente un nombre a un componente de icono.
+const iconMap = {
+  Facebook: <FaFacebook className="mr-3 text-xl" />,
+  Instagram: <FaInstagram className="mr-3 text-xl" />,
+  Linkedin: <FaLinkedin className="mr-3 text-xl" />,
+  Tiktok: <FaTiktok className="mr-3 text-xl" />,
 };
 
 const AddSocialAccountModal = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+  // NUEVO: La función centralizada para conectar CUALQUIER red social con Supabase.
+  const handleSocialConnect = async (provider) => {
+    try {
+      // 'provider' debe ser el nombre en minúsculas que Supabase reconoce: 'facebook', 'linkedin', etc.
+      const { error } = await supabase.auth.signInWithOAuth({ provider });
 
- const socialPlatforms = [
-    { name: 'Facebook', icon: 'Facebook', color: '#1877F2', action: handleFacebookConnect, disabled: false },
-    { name: 'Instagram', icon: 'Instagram', color: '#E4405F', action: null, disabled: true, note: 'Se conecta a través de Facebook' },
-    { name: 'LinkedIn', icon: 'Linkedin', color: '#0A66C2', action: null, disabled: true },
-    { name: 'TikTok', icon: 'Music', color: '#000000', action: null, disabled: true },
+      if (error) {
+        console.error(`Error al intentar conectar con ${provider}:`, error.message);
+        alert(`Error: ${error.message}`); // Mostramos el error directamente al usuario.
+      }
+      // Si no hay error, Supabase maneja la redirección automáticamente. ¡No necesitamos hacer nada más!
+    } catch (err) {
+      console.error('Error inesperado en la conexión:', err);
+    }
+  };
+
+  // Esta línea es perfecta, si el modal no está abierto, no renderiza nada.
+  if (!isOpen) {
+    return null;
+  }
+
+  // CAMBIO: Actualizamos este array. Ahora incluye el 'provider' exacto para Supabase.
+  const socialPlatforms = [
+    { name: 'Facebook', icon: 'Facebook', color: 'bg-blue-600', hover: 'hover:bg-blue-700', provider: 'facebook' },
+    { name: 'Instagram', icon: 'Instagram', color: 'bg-pink-600', hover: 'hover:bg-pink-700', provider: 'instagram' },
+    { name: 'Linkedin', icon: 'Linkedin', color: 'bg-sky-600', hover: 'hover:bg-sky-700', provider: 'linkedin' },
+    // OJO: Verifica en la documentación de Supabase si soportan TikTok como proveedor OAuth.
+    // Si no lo soportan, puedes comentar o eliminar esta línea.
+    { name: 'Tiktok', icon: 'Tiktok', color: 'bg-black', hover: 'hover:bg-gray-800', provider: 'tiktok' },
   ];
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100]">
-      <div className="bg-card rounded-lg shadow-modal w-full max-w-md m-4">
-        <div className="flex justify-between items-center p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Conectar una Nueva Cuenta Social</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <Icon name="X" size={20} />
+    // Tu JSX para el fondo oscuro y centrado es correcto.
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+        {/* Tu cabecera del modal es correcta */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-lg font-semibold text-gray-800">Conectar Nueva Cuenta</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+             {/* Usaremos un icono SVG simple para la 'X' para no necesitar otra librería */}
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
+
         <div className="p-6">
-          <p className="text-muted-foreground mb-6 text-center">Selecciona la plataforma que deseas conectar.</p>
-          <div className="space-y-3">
+          <p className="text-gray-600 mb-6 text-center">
+            Selecciona una plataforma para autenticar y conectar tu cuenta.
+          </p>
+          
+          {/* CAMBIO TOTAL: Aquí mapeamos sobre el array y creamos botones funcionales */}
+          <div className="space-y-4">
             {socialPlatforms.map((platform) => (
-              <Button
+              <button
                 key={platform.name}
-                onClick={platform.action}
-                disabled={platform.disabled}
-                fullWidth
-                className="justify-start text-left"
-                style={{ '--btn-bg': platform.color, '--btn-hover-bg': platform.color + 'E6' }} // Para un hover más oscuro
+                onClick={() => handleSocialConnect(platform.provider)} // ¡LA MAGIA OCURRE AQUÍ!
+                className={`w-full flex items-center justify-center py-3 px-4 text-white rounded-lg transition-colors font-semibold ${platform.color} ${platform.hover}`}
               >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center space-x-3"><Icon name={platform.icon} size={20} style={{ color: platform.color }} /><span>Conectar con {platform.name}</span></div>
-                  {platform.note && <span className="text-xs text-muted-foreground italic">{platform.note}</span>}
-                </div>
-              </Button>
+                {iconMap[platform.icon]} {/* Muestra el icono correcto */}
+                Conectar con {platform.name}
+              </button>
             ))}
           </div>
+
         </div>
       </div>
     </div>
   );
 };
+
 export default AddSocialAccountModal;

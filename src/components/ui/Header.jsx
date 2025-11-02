@@ -30,7 +30,7 @@ const Header = ({ activeProject = null, onProjectSelect }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target)) { setIsClientDropdownOpen(false); }
-      if (moreMenuRef.current && !moreMenu-Ref.current.contains(event.target)) { setIsMoreMenuOpen(false); }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) { setIsMoreMenuOpen(false); }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
