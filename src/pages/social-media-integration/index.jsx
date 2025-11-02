@@ -14,24 +14,14 @@ import ClientSocialOverview from './components/ClientSocialOverview';
 import AutomationPanel from './components/AutomationPanel';
 import ContentScheduler from './components/ContentScheduler';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-
+import AddSocialAccountModal from './components/AddSocialAccountModal'; 
 const SocialMediaIntegration = () => {
-  // --- AÑADIDO ---
+  
   // 2. Obtenemos el cliente actual, la función para cambiarlo y la lista de todos los clientes del contexto.
   const { currentClient, setCurrentClient, clients } = useClient();
   
   const [activeTab, setActiveTab] = useState('overview');
-
-  // --- ELIMINADO ---
-  // 3. Hemos borrado por completo el array gigante de 'mockClients'.
-  // Ya no necesitamos datos falsos, usaremos los datos reales que vienen del contexto.
-
-  // --- ELIMINADO ---
-  // También hemos borrado los 'useState' locales para 'selectedClient' y 'currentClient'.
-  // Ahora el contexto es la única fuente de verdad.
-  
-  // --- ELIMINADO ---
-  // Se ha borrado el 'useEffect' que seleccionaba un cliente falso por defecto al cargar la página.
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const tabs = [
     { id: 'overview', label: 'Resumen', icon: 'LayoutDashboard' },

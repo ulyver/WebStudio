@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../supabaseClient';
 import AddProjectModal from './AddProjectModal';
 
@@ -15,24 +16,19 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
   // Estados para la nueva funcionalidad de proyectos
   const [projects, setProjects] = useState([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const navigate = useNavigate();
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Si recibimos un nuevo cliente, actualizamos el estado del formulario.
+useEffect(() => {
     if (client) {
       setFormData(client);
     }
   }, [client]);
 
-  // Guarda de seguridad para evitar errores si el modal se renderiza sin datos
-  if (!isOpen || !client) {
-    return null;
-  }
-
-  // Hook para cargar los proyectos desde Supabase cuando el modal se abre o el cliente cambia
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!client.id) {
+      // La condición se mueve dentro del Hook, no fuera
+      if (!isOpen || !client?.id) {
         setProjects([]);
         return;
       }
@@ -51,12 +47,15 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
       setIsLoadingProjects(false);
     };
 
-    // Solo se ejecuta si el modal está abierto para no hacer llamadas innecesarias
-    if (isOpen) {
-      fetchProjects();
-    }
-  }, [client, isOpen]);
+    fetchProjects();
+  }, [client, isOpen]); // Se ejecuta cuando el modal se abre o el cliente cambia
 
+  // La guarda de seguridad se mueve DESPUÉS de todos los Hooks.
+  if (!isOpen || !client) {
+    return null;
+  }
+
+  // A partir de aquí, el código es el mismo
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: 'User' },
     { id: 'projects', label: 'Proyectos', icon: 'FolderOpen' },
@@ -73,7 +72,6 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Función para guardar un nuevo proyecto en la base de datos
   const handleSaveProject = async (projectData) => {
     try {
       const { data, error } = await supabase
@@ -83,15 +81,17 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
         .single();
       
       if (error) throw error;
-      // Añade el nuevo proyecto a la lista sin recargar la página
       setProjects(prevProjects => [data, ...prevProjects]);
-      setIsAddProjectModalOpen(false); // Cierra el modal de añadir
+      setIsAddProjectModalOpen(false);
     } catch (error) {
       console.error('Error saving project:', error.message);
       alert('Hubo un error al guardar el proyecto.');
     }
   };
-
+const handleProjectSelect = (projectId) => {
+  console.log(`Navegando al editor para el proyecto: ${projectId}`);
+  navigate(`/template-editor/${projectId}`);
+};
   // --- Renderizado de Pestañas ---
 
   const renderProfileTab = () => (
@@ -113,7 +113,7 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
             </div>
           )}
         </div>
-      </div>
+       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Información de Contacto</h3>
@@ -130,8 +130,8 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
               <div className="flex items-center space-x-3"><Icon name="MapPin" size={16} className="text-muted-foreground" /><span className="text-foreground">{client?.address}</span></div>
             </div>
           )}
-        </div>
-        <div className="space-y-4">
+         </div>
+         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Estado del Servicio</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between"><span className="text-muted-foreground">Suscripción</span><span className="font-medium text-foreground capitalize">{client?.subscription}</span></div>
@@ -139,51 +139,63 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
             <div className="flex items-center justify-between"><span className="text-muted-foreground">Redes Sociales</span><span className={`font-medium ${client?.socialConnected ? 'text-success' : 'text-muted-foreground'}`}>{client?.socialConnected ? 'Conectadas' : 'Sin Conectar'}</span></div>
           </div>
         </div>
-      </div>
+     </div>
     </div>
   );
 
-  const renderProjectsTab = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Proyectos del Cliente</h3>
-        <Button variant="outline" iconName="Plus" iconPosition="left" onClick={() => setIsAddProjectModalOpen(true)} type="button">
-          Nuevo Proyecto
-        </Button>
+const renderProjectsTab = () => (
+  <div className="space-y-4">
+    <div className="flex items-center justify-between">
+      <h3 className="text-lg font-semibold text-foreground">Proyectos del Cliente</h3>
+      <Button variant="outline" iconName="Plus" iconPosition="left" onClick={() => setIsAddProjectModalOpen(true)} type="button">
+        Nuevo Proyecto
+      </Button>
+    </div>
+    
+    {isLoadingProjects ? (
+      <p className="text-muted-foreground text-center py-4">Cargando proyectos...</p>
+    ) : projects.length === 0 ? (
+      <div className="text-center py-8 bg-muted/30 rounded-lg">
+        <Icon name="FolderOpen" size={40} className="mx-auto text-muted-foreground mb-3" />
+        <p className="text-foreground font-medium">No hay proyectos registrados</p>
+        <p className="text-muted-foreground text-sm">Haz clic en "Nuevo Proyecto" para empezar.</p>
       </div>
-      {isLoadingProjects ? (
-        <p className="text-muted-foreground text-center py-4">Cargando proyectos...</p>
-      ) : projects.length === 0 ? (
-        <div className="text-center py-8 bg-muted/30 rounded-lg">
-          <Icon name="FolderOpen" size={40} className="mx-auto text-muted-foreground mb-3" />
-          <p className="text-foreground font-medium">No hay proyectos registrados</p>
-          <p className="text-muted-foreground text-sm">Haz clic en "Nuevo Proyecto" para empezar.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {projects.map((project) => (
-            <div key={project.id} className="bg-muted/50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-foreground">{project.name}</h4>
-                  <p className="text-sm text-muted-foreground">{project.description || 'Sin descripción'}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${project.status === 'completed' ? 'bg-success/10 text-success' : project.status === 'in-progress' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'}`}>{project.status}</span>
-                  <Button variant="ghost" size="icon"><Icon name="ExternalLink" size={16} /></Button>
-                </div>
+    ) : (
+      <div className="space-y-3">
+        {projects.map((project) => (
+          // --- ESTE ES EL CAMBIO PRINCIPAL ---
+          <button 
+            key={project.id} 
+            onClick={() => handleProjectSelect(project.id)}
+            className="w-full bg-muted/50 hover:bg-muted rounded-lg p-4 text-left transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-foreground">{project.name}</h4>
+                <p className="text-sm text-muted-foreground">{project.description || 'Sin descripción'}</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                  project.status === 'completed' ? 'bg-success/10 text-success' :
+                  project.status === 'in-progress' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {project.status}
+                </span>
+                {/* El icono ahora está dentro del botón */}
+                <Icon name="ExternalLink" size={16} className="text-muted-foreground" />
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
   const renderSocialTab = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-foreground">Integración de Redes Sociales</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {client?.socialAccounts?.map((account, index) => (
           <div key={index} className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
@@ -193,7 +205,7 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
               </div>
               <div className={`w-3 h-3 rounded-full ${account?.connected ? 'bg-success' : 'bg-muted-foreground'}`}></div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><span className="text-muted-foreground">Seguidores</span><div className="font-medium text-foreground">{account?.followers}</div></div>
               <div><span className="text-muted-foreground">Posts</span><div className="font-medium text-foreground">{account?.posts}</div></div>
             </div>
@@ -209,7 +221,7 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
         <h3 className="text-lg font-semibold text-foreground">Historial de Comunicación</h3>
         <Button variant="outline" iconName="Plus" iconPosition="left">Nueva Nota</Button>
       </div>
-      <div className="space-y-4">
+       <div className="space-y-4">
         {client?.communications?.map((comm, index) => (
           <div key={index} className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-start justify-between mb-2">
@@ -237,7 +249,7 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
             <Button variant="ghost" size="icon" onClick={onClose}><Icon name="X" size={20} /></Button>
           </div>
         </div>
-        <div className="flex border-b border-border">
+         <div className="flex border-b border-border">
           {tabs?.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium transition-smooth ${activeTab === tab.id ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
               <Icon name={tab.icon} size={16} /><span>{tab.label}</span>

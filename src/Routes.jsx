@@ -24,6 +24,8 @@ const Routes = () => {
         <Route path="/social-media-integration" element={<SocialMediaIntegration />} />
         <Route path="/client-management" element={<ClientManagement />} />
         <Route path="/project-details" element={<ProjectDetails />} />
+        <Route path="/project-details/:projectId?" element={<ProjectDetails />} />
+        <Route path="/template-editor/:projectId" element={<TemplateEditor />} />
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
       </ErrorBoundary>

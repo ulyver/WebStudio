@@ -172,10 +172,11 @@ const ClientManagement = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredClients?.map((client) =>
-                  <ClientCard key={client?.id} client={client} onSelect={handleClientSelect} onEdit={handleEditClient} onViewProjects={handleViewProjects} />
-                )}
-              </div>
+                {/* Añadimos "Array.isArray(filteredClients) &&" para asegurarnos de que solo intentamos mapear si es un array */}
+                {Array.isArray(filteredClients) && filteredClients.map((client) =>
+      <ClientCard key={client?.id} client={client} onSelect={handleClientSelect} onEdit={handleEditClient} onViewProjects={handleViewProjects} />
+              )}
+            </div>
             )}
           </div>
         </div>

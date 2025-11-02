@@ -1,146 +1,91 @@
+// src/pages/project-details/components/ProjectProgress.jsx
+
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
+// Función para calcular el progreso general
+const calculateOverallProgress = (project) => {
+  if (!project) return 0;
+  const progresses = [
+    project.progress_planning, project.progress_design,
+    project.progress_development, project.progress_content,
+    project.progress_testing, project.progress_deployment,
+  ].filter(p => typeof p === 'number'); // Filtramos por si algún dato es null
+  
+  if (progresses.length === 0) return 0;
+  const total = progresses.reduce((sum, current) => sum + current, 0);
+  return Math.round(total / progresses.length);
+};
+
 const ProjectProgress = ({ project }) => {
+  // --- GUARDA DE SEGURIDAD ---
+  // Si no se recibe un objeto 'project', no se renderiza nada.
+  // Esto evita el error cuando un cliente no tiene proyectos activos.
+  if (!project) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-6 shadow-card text-center">
+        <p className="text-muted-foreground">No hay un proyecto activo para mostrar el progreso.</p>
+      </div>
+    );
+  }
+
+  const overallProgress = calculateOverallProgress(project);
+
+  const getStatusFromProgress = (progress) => {
+    if (progress === 100) return 'completed';
+    if (progress > 0) return 'in-progress';
+    return 'pending';
+  };
+
   const phases = [
-    {
-      id: 'planning',
-      name: 'Planificación',
-      description: 'Análisis de requisitos y diseño inicial',
-      status: 'completed',
-      completedDate: '15/10/2025',
-      progress: 100
-    },
-    {
-      id: 'design',
-      name: 'Diseño y Plantillas',
-      description: 'Creación de plantillas y diseño visual',
-      status: 'completed',
-      completedDate: '18/10/2025',
-      progress: 100
-    },
-    {
-      id: 'development',
-      name: 'Desarrollo',
-      description: 'Implementación del sitio web',
-      status: 'in-progress',
-      completedDate: null,
-      progress: 75
-    },
-    {
-      id: 'content',
-      name: 'Contenido',
-      description: 'Creación y optimización de contenido',
-      status: 'in-progress',
-      completedDate: null,
-      progress: 60
-    },
-    {
-      id: 'testing',
-      name: 'Pruebas',
-      description: 'Testing y optimización',
-      status: 'pending',
-      completedDate: null,
-      progress: 0
-    },
-    {
-      id: 'deployment',
-      name: 'Despliegue',
-      description: 'Publicación y configuración final',
-      status: 'pending',
-      completedDate: null,
-      progress: 0
-    }
+    { name: 'Planificación', progress: project.progress_planning || 0 },
+    { name: 'Diseño y Plantillas', progress: project.progress_design || 0 },
+    { name: 'Desarrollo', progress: project.progress_development || 0 },
+    { name: 'Contenido', progress: project.progress_content || 0 },
+    { name: 'Pruebas', progress: project.progress_testing || 0 },
+    { name: 'Despliegue', progress: project.progress_deployment || 0 },
   ];
 
   const getPhaseIcon = (status) => {
     switch (status) {
-      case 'completed':
-        return 'CheckCircle2';
-      case 'in-progress':
-        return 'Clock';
-      case 'pending':
-        return 'Circle';
-      default:
-        return 'Circle';
+      case 'completed': return 'CheckCircle2';
+      case 'in-progress': return 'Timer'; // Cambiado de Clock para más claridad
+      default: return 'Circle';
     }
   };
-
+  
   const getPhaseColor = (status) => {
     switch (status) {
-      case 'completed':
-        return 'text-success';
-      case 'in-progress':
-        return 'text-warning';
-      case 'pending':
-        return 'text-muted-foreground';
-      default:
-        return 'text-muted-foreground';
+      case 'completed': return 'text-success';
+      case 'in-progress': return 'text-warning';
+      default: return 'text-muted-foreground/50';
     }
   };
-
-  const overallProgress = Math.round(phases?.reduce((acc, phase) => acc + phase?.progress, 0) / phases?.length);
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 shadow-card">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Progreso del Proyecto</h2>
-        <div className="flex items-center gap-2">
-          <div className="text-2xl font-bold text-primary">{overallProgress}%</div>
-          <div className="text-sm text-muted-foreground">Completado</div>
-        </div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Progreso del Proyecto</h3>
+        <span className="text-xl font-bold text-primary">{overallProgress}%</span>
       </div>
-      {/* Overall Progress Bar */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-foreground">Progreso General</span>
-          <span className="text-sm text-muted-foreground">{overallProgress}%</span>
-        </div>
-        <div className="w-full bg-muted rounded-full h-3">
-          <div 
-            className="bg-primary h-3 rounded-full transition-all duration-300"
-            style={{ width: `${overallProgress}%` }}
-          ></div>
-        </div>
+      <div className="w-full bg-muted rounded-full h-2.5 mb-6">
+        <div className="bg-primary h-2.5 rounded-full" style={{ width: `${overallProgress}%` }}></div>
       </div>
-      {/* Phase List */}
-      <div className="space-y-4">
-        {phases?.map((phase, index) => (
-          <div key={phase?.id} className="flex items-start gap-4">
-            <div className="flex-shrink-0 mt-1">
-              <Icon 
-                name={getPhaseIcon(phase?.status)} 
-                size={20} 
-                className={getPhaseColor(phase?.status)}
-              />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="font-medium text-foreground">{phase?.name}</h3>
-                <span className="text-sm text-muted-foreground">{phase?.progress}%</span>
+      <div className="space-y-3">
+        {phases.map((phase) => {
+          const status = getStatusFromProgress(phase.progress);
+          return (
+            <div key={phase.name} className="flex items-center space-x-3">
+              <Icon name={getPhaseIcon(status)} size={20} className={getPhaseColor(status)} />
+              <div className="flex-1">
+                <div className="flex justify-between items-center">
+                  <p className="font-medium text-foreground">{phase.name}</p>
+                  <p className={`text-sm font-medium ${status === 'completed' ? 'text-success' : 'text-muted-foreground'}`}>{phase.progress}%</p>
+                </div>
               </div>
-              
-              <p className="text-sm text-muted-foreground mb-2">{phase?.description}</p>
-              
-              {phase?.completedDate && (
-                <div className="flex items-center gap-2 text-xs text-success">
-                  <Icon name="Check" size={12} />
-                  <span>Completado el {phase?.completedDate}</span>
-                </div>
-              )}
-              
-              {phase?.status === 'in-progress' && (
-                <div className="w-full bg-muted rounded-full h-2 mt-2">
-                  <div 
-                    className="bg-warning h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${phase?.progress}%` }}
-                  ></div>
-                </div>
-              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
