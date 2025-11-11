@@ -19,36 +19,45 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
   const navigate = useNavigate();
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
 
-useEffect(() => {
-    if (client) {
-      setFormData(client);
+ useEffect(() => {
+    // Si el modal no está visible o no hay un cliente, no hacemos nada.
+    if (!isOpen || !client) {
+      setProjects([]); // Limpiamos la lista de proyectos por si acaso
+      return;
     }
-  }, [client]);
 
-  useEffect(() => {
+    // Creamos la función para ir a buscar los proyectos a Supabase.
     const fetchProjects = async () => {
-      // La condición se mueve dentro del Hook, no fuera
-      if (!isOpen || !client?.id) {
-        setProjects([]);
-        return;
-      }
-      setIsLoadingProjects(true);
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('client_id', client.id)
-        .order('created_at', { ascending: false });
+      setIsLoadingProjects(true); // Ponemos el estado de carga en 'true'
+      try {
+        // Hacemos la llamada a Supabase
+        const { data, error } = await supabase
+          .from('projects') // Desde la tabla 'projects'
+          .select('*')     // Seleccionamos todas las columnas
+          .eq('client_id', client.id); // Donde el 'client_id' coincida con el ID del cliente actual
 
-      if (error) {
+        if (error) {
+          // Si hay un error, lo mostramos en la consola.
+          throw error;
+        }
+        
+        // Si todo va bien, guardamos los proyectos en el estado.
+        setProjects(data || []);
+
+      } catch (error) {
         console.error('Error fetching projects:', error);
-      } else {
-        setProjects(data);
+        setProjects([]); // En caso de error, dejamos la lista vacía.
+      } finally {
+        // Al final, haya éxito o error, quitamos el estado de carga.
+        setIsLoadingProjects(false);
       }
-      setIsLoadingProjects(false);
     };
 
+    // Ejecutamos la función.
     fetchProjects();
-  }, [client, isOpen]); // Se ejecuta cuando el modal se abre o el cliente cambia
+    
+  }, [client, isOpen]); // Este efecto se volverá a ejecutar si el cliente cambia o si el modal se abre/cierra.
+
 
   // La guarda de seguridad se mueve DESPUÉS de todos los Hooks.
   if (!isOpen || !client) {
